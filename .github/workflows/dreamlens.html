@@ -1,0 +1,98 @@
+File Name: dreamlens.html
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DreamLens</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, #1a0033, #330066, #4b0082);
+      font-family: 'Playfair Display', serif;
+      color: white;
+      text-align: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-top: 80px;
+      animation: glow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px #bb86fc, 0 0 20px #bb86fc;
+      }
+      to {
+        text-shadow: 0 0 20px #d0aaff, 0 0 40px #d0aaff;
+      }
+    }
+
+    .icon-container {
+      margin-top: 80px;
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .icon:hover {
+      transform: scale(1.1);
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .icon img {
+      width: 40px;
+      height: 40px;
+      filter: brightness(0) invert(1);
+    }
+
+    footer {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      font-size: 0.9em;
+      color: #cccccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>DreamLens</h1>
+  <p>당신의 꿈은 오늘 어떤 색인가요?</p>
+
+  <div class="icon-container">
+    <a href="https://www.elevenlabs.io" target="_blank" class="icon" title="음성으로 시작하기">
+      <img src="https://img.icons8.com/ios-filled/50/microphone.png" alt="Voice">
+    </a>
+
+    <a href="https://claude.ai" target="_blank" class="icon" title="글로 상상하기">
+      <img src="https://img.icons8.com/ios-filled/50/quill-pen.png" alt="Pen">
+    </a>
+
+    <a href="https://runwayml.com" target="_blank" class="icon" title="영상으로 만들기">
+      <img src="https://img.icons8.com/ios-filled/50/search--v1.png" alt="Search">
+    </a>
+  </div>
+
+  <footer>
+    ⓒ 2025 DreamLens. 꿈은 현실보다 더 놀라울 수 있습니다.
+  </footer>
+</body>
+</html>
