@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=600, initial-scale=1.0">
+  <title>DreamLens - 꿈 입력</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ====== DreamLens 인트로 스플래시 ====== */
+    #intro-splash {
+      position: fixed;
+      z-index: 99999;
+      inset: 0;
+      background: #000;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.5s;
+    }
+    #intro-splash img {
+      opacity: 0;
+      transition: opacity 1.5s;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: block;
+    }
+    /* ====== DreamLens 인트로 스플래시 END ====== */
+
+    html, body {
+      margin: 0; padding: 0;
+      font-family: 'Playfair Display', 'Noto Serif KR', serif !important;
+      background: linear-gradient(to bottom, #0c0224, #1a0033);
+      color: white;
+      min-height: 100vh;
+      min-width: 100vw;
+      width: 100vw;
+      box-sizing: border-box;
+      overflow-x: hidden; overflow-y: auto;
+    }
+    #audio-settings-text-btn {
+      position: fixed; top: 24px; right: 32px; z-index: 999; background: none; border: none; color: #d1b3ff; cursor: pointer;
+      font-size: 1.35em; font-family: 'Playfair Display', 'Noto Serif KR', serif; font-weight: bold; letter-spacing: 0.04em;
+      transition: color 0.2s; padding: 6px 20px 6px 20px; border-radius: 20px;
+    }
+    #audio-settings-text-btn:hover { color: #fff; background: #4b0082; }
+    #audioSidebar {
+      position: fixed; top: 0; right: -340px; width: 320px; height: 100vh;
+      background: linear-gradient(120deg, #4b0082 80%, #6e2edc 100%);
+      color: #fff; z-index: 1200; box-shadow: -6px 0 22px 0 #0008;
+      padding: 40px 30px 20px 30px; transition: right 0.35s cubic-bezier(.7,.2,.3,1.0);
+      display: flex; flex-direction: column; gap: 18px;
+      font-family: 'Playfair Display', 'Noto Serif KR', serif; max-width: 95vw; box-sizing: border-box;
+    }
+    #audioSidebar.open { right: 0; }
+    #audioSidebar h3 { margin: 0 0 24px 0; font-size: 1.22em; letter-spacing: 0.03em; color: #fff8; font-weight: 700; text-shadow: 0 2px 12px #000a; }
+    #audioSidebar label { margin-top: 10px; font-size: 1.02em; color: #eee; font-weight: 500; }
+    #audioSidebar input[type="range"] { width: 100%; margin: 10px 0 2px 0; accent-color: #d1b3ff; height: 3px; }
+    #audioSidebar .audio-status-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 1.11em; }
+    #audioSidebar .audio-status-row button {
+      background: #fff2; color: #fff; border: none; border-radius: 8px; font-size: 1.12em;
+      padding: 4px 14px; margin: 0 2px; cursor: pointer; transition: background 0.2s; font-family: inherit;
+    }
+    #audioSidebar .audio-status-row button.active, #audioSidebar .audio-status-row button:hover { background: #fff7; color: #4b0082; }
+    #audioSidebar .close-sidebar-btn {
+      position: absolute; top: 10px; right: 17px; font-size: 1.6em; background: none; border: none; color: #fff9;
+      cursor: pointer; filter: drop-shadow(0 2px 8px #000a); transition: color 0.2s;
+    }
+    #audioSidebar .close-sidebar-btn:hover { color: #ffb3c6; }
+    .center-wrapper {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 100vw; position: relative; z-index: 10; min-height: 100vh; margin-bottom: 60px;
+    }
+    .shooting-star {
+      position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%;
+      animation: shoot 5s linear infinite; opacity: 0.8; z-index: 0; pointer-events: none;
+    }
+    @keyframes shoot {
+      0% { transform: translate(0, 0); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translate(-800px, 800px); opacity: 0; }
+    }
+    button {
+      padding: 10px 20px; margin: 5px; border: none; border-radius: 10px;
+      background-color: #4b0082; color: white; font-size: 1em; cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-family: 'Playfair Display', 'Noto Serif KR', serif !important;
+      display: inline-flex; align-items: center; justify-content: center; position: relative; z-index: 11;
+    }
+    button:hover { background-color: #6a0dad; }
+    .copy-btn {
+      background-color: #888; font-size: 0.8em; padding: 4px 8px; margin-left: 10px; border-radius: 5px;
+      font-family: 'Playfair Display', 'Noto Serif KR', serif !important; position: relative; z-index: 11;
+    }
+    .close-btn {
+      background-color: #888; font-size: 1.1em; padding: 2px 10px 2px 10px; margin-left: 6px; border-radius: 5px;
+      font-family: 'Playfair Display', 'Noto Serif KR', serif !important; border: none; color: white; cursor: pointer;
+      position: relative; z-index: 11; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .close-btn:hover { background-color: #d32f2f; }
+    .inline-close-x {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.25em;
+      margin-left: 12px;
+      cursor: pointer;
+      vertical-align: middle;
+      padding: 0 4px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      position: relative; z-index: 14;
+    }
+    .inline-close-x:hover {
+      background: #d32f2f;
+    }
+    .attach-media-btn {
+      background: none;
+      border: none;
+      font-size: 1.4em;
+      color: #4b0082;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 11;
+    }
+    .attach-media-btn:hover { background: #ece6fa; }
+    textarea, input, select {
+      font-family: 'Playfair Display', 'Noto Serif KR', serif !important;
+      font-size: 1.1em; color: #222; position: relative; z-index: 11;
+    }
+    #voiceSection, #typingSection, #dreamList, h1, h2, p, .dream-actions {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; width: 100%; position: relative; z-index: 11;
+    }
+    h1, h2, p, label, textarea, button, div, strong {
+      text-align: center !important; font-family: 'Playfair Display', 'Noto Serif KR', serif !important;
+      letter-spacing: 0.02em; position: relative; z-index: 11;
+    }
+    #dreamList {
+      width: 100%;
+      max-width: 700px;
+      flex-direction: column;
+      align-items: center;
+    }
+    .dream-record-row {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      max-width: 700px;
+      background: #f9f9f9;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      color: #222;
+      box-sizing: border-box;
+      padding: 10px;
+      gap: 20px;
+      position: relative;
+      z-index: 11;
+    }
+    .dream-media-col {
+      min-width: 120px;
+      max-width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 5px;
+    }
+    .dream-media-preview {
+      display: block;
+      max-width: 200px;
+      max-height: 140px;
+      margin-bottom: 2px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px 0 #0005;
+      background: #eee;
+    }
+    .dream-media-btns {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 2px;
+      justify-content: center;
+    }
+    .dream-content-col {
+      flex: 1 1 0%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .dream-action-btns {
+      display: flex; justify-content: flex-start; gap: 10px; margin-top: 5px; position: relative; z-index: 11;
+    }
+    .icon-btn {
+      background: none; border: none; font-size: 1.3em; color: #4b0082; cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; position: relative; z-index: 11;
+    }
+    .icon-btn:hover { background: #ece6fa; }
+    .analysisResultBox {
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-style: italic;
+      color: #fff;
+      background: rgba(20,10,50,0.94);
+      border-radius: 10px;
+      max-width: 90vw;
+      width: 600px;
+      padding: 20px 22px 18px 22px;
+      min-height: 48px;
+      font-size: 1.05em;
+      box-shadow: 0 4px 18px 0 #0006;
+      white-space: pre-line;
+      position: relative;
+      z-index: 13;
+      transition: opacity 0.3s;
+      word-break: break-all;
+      border: 1.5px solid #444;
+      text-align: left;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .analysisResultContent {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    #voiceDreamMediaInput, #typedDreamMediaInput, .dream-media-upload-btn {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- DreamLens 인트로 스플래시 (로고 페이드 인/아웃) -->
+  <div id="intro-splash">
+    <img id="fade-img" src="logo.PNG" alt="DreamLens Logo">
+  </div>
+  <!-- 자동 브금 오디오 (초기 볼륨=0, splash 끝난 뒤 복원) -->
+  <audio id="bgmAudio" loop>
+    <source src="https://raw.githubusercontent.com/t25t221/t25t221/main/inner-peace-339640%20(1).mp3" type="audio/mp3">
+  </audio>
+  <!-- "설정" 텍스트 버튼 -->
+  <button id="audio-settings-text-btn" onclick="openAudioSidebar()">설정</button>
+  <!-- 오디오 사이드바 -->
+  <div id="audioSidebar">
+    <button class="close-sidebar-btn" onclick="closeAudioSidebar()" title="닫기">✕</button>
+    <h3>🎶 배경음악 설정</h3>
+    <div class="audio-status-row">
+      <span id="audioStatusText">재생 중</span>
+      <button onclick="toggleBgm()" id="audioPlayPauseBtn">⏸️ 일시정지</button>
+    </div>
+    <label for="bgmVolume">음악 볼륨 <span id="bgmVolumeValue">40%</span></label>
+    <input type="range" id="bgmVolume" min="0" max="100" step="1" value="40" oninput="setBgmVolume(this.value)">
+    <div style="margin-top:24px; font-size:0.98em; color:#fff6;">
+      <b>곡명:</b> Inner Peace<br>
+      <b>아티스트:</b> <a href="https://pixabay.com/users/romanovsound-30104123/" target="_blank" style="color:#efd6ff;">Romanovsound</a><br>
+      <a href="https://pixabay.com/music/ambient-inner-peace-339640/" target="_blank" style="color:#efd6ff;">Pixabay에서 곡 정보 보기</a>
+    </div>
+  </div>
+  <script>
+    // 인트로 스플래시 페이드In/Out + bgm은 splash 끝난 뒤에만 볼륨복원 및 play
+    window.addEventListener('DOMContentLoaded', function() {
+      const fadeImg = document.getElementById('fade-img');
+      const splash = document.getElementById('intro-splash');
+      const bgmAudio = document.getElementById('bgmAudio');
+      // 브금은 무조건 처음엔 무음(볼륨 0)
+      bgmAudio.volume = 0;
+      // 1.5초 페이드 인
+      setTimeout(() => { fadeImg.style.opacity = 1; }, 100);
+      // 2초 유지 후 1.5초 페이드 아웃
+      setTimeout(() => { fadeImg.style.opacity = 0; }, 1600 + 2000);
+      // 5초 후 오버레이 제거 및 볼륨 복원 + play 시도
+      setTimeout(() => {
+        splash.style.transition = "opacity 1s";
+        splash.style.opacity = 0;
+        setTimeout(()=>{
+          splash.style.display = "none";
+          // 사용자가 저장한 볼륨 복원
+          let storedVol = localStorage.getItem('dreamlens_bgm_volume');
+          let vol = storedVol !== null ? parseInt(storedVol)/100 : 0.4;
+          bgmAudio.volume = vol;
+          // 브라우저 자동재생 정책 대응
+          bgmAudio.play().catch(()=>{});
+        }, 1000);
+      }, 1600 + 2000 + 1500);
+    });
+  </script>
+  <script>
+    // 오디오 & 설정 사이드바 제어
+    const bgmAudio = document.getElementById('bgmAudio');
+    const bgmVolumeSlider = document.getElementById('bgmVolume');
+    const bgmVolumeValue = document.getElementById('bgmVolumeValue');
+    const audioSidebar = document.getElementById('audioSidebar');
+    const audioStatusText = document.getElementById('audioStatusText');
+    const audioPlayPauseBtn = document.getElementById('audioPlayPauseBtn');
+
+    let storedVol = localStorage.getItem('dreamlens_bgm_volume');
+    bgmVolumeSlider.value = storedVol !== null ? parseInt(storedVol) : 40;
+    bgmVolumeValue.textContent = `${bgmVolumeSlider.value}%`;
+
+    function setBgmVolume(val) {
+      bgmAudio.volume = val/100;
+      bgmVolumeValue.textContent = `${val}%`;
+      localStorage.setItem('dreamlens_bgm_volume', val);
+    }
+    function toggleBgm() {
+      if (bgmAudio.paused) {
+        bgmAudio.play();
+      } else {
+        bgmAudio.pause();
+      }
+      updateAudioStatus();
+    }
+    function updateAudioStatus() {
+      if (bgmAudio.paused) {
+        audioStatusText.textContent = "일시정지";
+        audioPlayPauseBtn.innerHTML = "▶️ 재생";
+      } else {
+        audioStatusText.textContent = "재생 중";
+        audioPlayPauseBtn.innerHTML = "⏸️ 일시정지";
+      }
+    }
+    function openAudioSidebar() {
+      audioSidebar.classList.add('open');
+    }
+    function closeAudioSidebar() {
+      audioSidebar.classList.remove('open');
+    }
+    // 첫 사용자 상호작용에서 자동재생 시도 (브라우저 정책 대응)
+    let bgmTried = false;
+    function tryPlayBgmOnce() {
+      if (!bgmTried) {
+        bgmAudio.play().catch(()=>{});
+        bgmTried = true;
+      }
+    }
+    document.addEventListener('click', tryPlayBgmOnce, { once: true });
+    document.addEventListener('keydown', tryPlayBgmOnce, { once: true });
+    document.addEventListener('touchstart', tryPlayBgmOnce, { once: true });
+
+    bgmAudio.addEventListener('play', updateAudioStatus);
+    bgmAudio.addEventListener('pause', updateAudioStatus);
+
+    updateAudioStatus();
+    setBgmVolume(bgmVolumeSlider.value);
+
+    document.addEventListener('mousedown', function(e){
+      if(audioSidebar.classList.contains('open') && !audioSidebar.contains(e.target) && e.target.id!=='audio-settings-text-btn'){
+        closeAudioSidebar();
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && audioSidebar.classList.contains('open')) closeAudioSidebar();
+    });
+  </script>
+  <script>
+    for (let i = 0; i < 40; i++) {
+      const star = document.createElement('div');
+      star.className = 'shooting-star';
+      star.style.top = Math.random() * window.innerHeight + 'px';
+      star.style.left = Math.random() * window.innerWidth + 'px';
+      star.style.width = '2px';
+      star.style.height = '2px';
+      star.style.animationDuration = (2 + Math.random() * 3) + 's';
+      star.style.animationDelay = (Math.random() * 5) + 's';
+      document.body.appendChild(star);
+    }
+  </script>
+  <div class="center-wrapper">
+    <h1>DreamLens</h1>
+    <h2>당신의 꿈은 오늘 어떤 색깔인가요?</h2>
+
+    <div class="dream-actions">
+      <button id="voiceRecordBtn" onclick="startVoiceInput()">🎤 음성으로 말하기</button>
+      <button onclick="startTypingInput()">⌨️ 직접 타이핑하기</button>
+    </div>
+
+    <!-- 음성 입력 결과 -->
+    <div id="voiceSection" style="display:none; margin-top:20px;">
+      <p>🎤 인식된 꿈 내용:</p>
+      <textarea id="voiceText" rows="5" style="width:600px; max-width:90vw;"></textarea>
+      <div style="display:flex; align-items:center; justify-content:center; margin-top:8px;">
+        <button class="copy-btn" onclick="copyText('voiceText')">📋 복사</button>
+        <button class="close-btn" onclick="closeVoiceSection()" title="닫기">✖️</button>
+      </div>
+      <div id="voiceDreamMediaPreview"></div>
+      <button onclick="saveDream('voice')">💾 저장하기</button>
+      <button id="voiceAnalysisBtn" onclick="analyzeDreamWithGpt('voice')">🧠 심리분석(GPT)</button>
+      <div id="voiceAnalysisResultContainer"></div>
+      <button onclick="generateVideo('voice')">🖼️🎬 이미지/영상(Runway)</button>
+    </div>
+
+    <!-- 직접 타이핑 입력 -->
+    <div id="typingSection" style="display:none; margin-top:20px;">
+      <p>⌨️ 자유롭게 꿈을 입력하세요:</p>
+      <textarea id="typedText" rows="5" style="width:600px; max-width:90vw;"></textarea>
+      <div style="display:flex; align-items:center; justify-content:center; margin-top:8px;">
+        <button class="copy-btn" onclick="copyText('typedText')">📋 복사</button>
+        <button class="close-btn" onclick="closeTypingSection()" title="닫기">✖️</button>
+      </div>
+      <div id="typedDreamMediaPreview"></div>
+      <button onclick="saveDream('typed')">💾 저장하기</button>
+      <button id="typedAnalysisBtn" onclick="analyzeDreamWithGpt('typed')">🧠 심리분석(GPT)</button>
+      <div id="typedAnalysisResultContainer"></div>
+      <button onclick="generateVideo('typed')">🖼️🎬 이미지/영상(Runway)</button>
+    </div>
+
+    <!-- 저장된 꿈 목록 보기 -->
+    <div style="margin-top:30px;">
+      <button onclick="showDreams()">📘 꿈 기록장 열기</button>
+      <button id="closeDreamsBtn" onclick="closeDreams()" style="display:none;">📕 꿈 기록장 닫기</button>
+      <div id="dreamList" style="margin-top:20px;"></div>
+    </div>
+  </div>
+  <script>
+    let recognition;
+    let recognizing = false;
+    let voiceMediaData = null;
+    let voiceMediaType = null;
+    let typedMediaData = null;
+    let typedMediaType = null;
+
+    // 미디어 미리보기 세팅 (이미지/비디오)
+    function setupMediaInput(inputId, previewId, type) {
+      document.getElementById(inputId).addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const previewDiv = document.getElementById(previewId);
+        previewDiv.innerHTML = '';
+        if (!file) {
+          if(type==='voice'){ voiceMediaData = null; voiceMediaType = null; }
+          else { typedMediaData = null; typedMediaType = null; }
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          let el;
+          // 이미지
+          if(file.type.startsWith('image/')) {
+            el = document.createElement('img');
+            el.src = ev.target.result;
+            el.className = 'dream-media-preview';
+            if(type==='voice'){ voiceMediaData = el.src; voiceMediaType = 'image'; }
+            else { typedMediaData = el.src; typedMediaType = 'image'; }
+            previewDiv.innerHTML = '';
+            previewDiv.appendChild(el);
+          }
+          // 비디오(mp4 등)
+          else if (file.type.startsWith('video/')) {
+            el = document.createElement('video');
+            el.className = 'dream-media-preview';
+            el.controls = true;
+            el.autoplay = true;
+            el.loop = true;
+            el.muted = true;
+            el.style.background = "#000";
+            el.src = ev.target.result;
+            if(type==='voice'){ voiceMediaData = el.src; voiceMediaType = 'video'; }
+            else { typedMediaData = el.src; typedMediaType = 'video'; }
+            previewDiv.innerHTML = '';
+            previewDiv.appendChild(el);
+            setTimeout(()=>{ el.play().catch(()=>{}); }, 100);
+          } else {
+            if(type==='voice'){ voiceMediaData = null; voiceMediaType = null; }
+            else { typedMediaData = null; typedMediaType = null; }
+            previewDiv.innerHTML = '';
+            previewDiv.textContent = "이미지/동영상 파일만 가능합니다.";
+          }
+        }
+        reader.readAsDataURL(file);
+      });
+    }
+    // 입력창의 카메라 버튼 완전히 제거했으므로 더 이상 setupMediaInput 불필요
+
+    function isSpeechRecognitionSupported() {
+      return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+    }
+    function startVoiceInput() {
+      document.getElementById("voiceSection").style.display = "flex";
+      document.getElementById("typingSection").style.display = "none";
+      if (!isSpeechRecognitionSupported()) {
+        alert("이 브라우저는 음성인식 기능을 지원하지 않습니다. 크롬 최신 브라우저를 이용해 주세요.");
+        return;
+      }
+      if (recognizing) {
+        stopRecognition();
+        return;
+      }
+      document.getElementById("voiceRecordBtn").classList.add('recording');
+      let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = "ko-KR";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.onstart = function() {
+        recognizing = true;
+        document.getElementById("voiceRecordBtn").textContent = "🛑 말하기 중지";
+      };
+      recognition.onend = function() {
+        recognizing = false;
+        document.getElementById("voiceRecordBtn").classList.remove('recording');
+        document.getElementById("voiceRecordBtn").textContent = "🎤 음성으로 말하기";
+      };
+      recognition.onerror = function(event) {
+        recognizing = false;
+        document.getElementById("voiceRecordBtn").classList.remove('recording');
+        document.getElementById("voiceRecordBtn").textContent = "🎤 음성으로 말하기";
+        alert("음성 인식 중 오류가 발생했습니다: " + event.error);
+      };
+      recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const textArea = document.getElementById("voiceText");
+        textArea.value = finalTranscript + interimTranscript;
+      };
+      recognition.start();
+    }
+    function stopRecognition() {
+      if (recognition && recognizing) {
+        recognition.stop();
+      }
+    }
+    function closeVoiceSection() {
+      document.getElementById("voiceSection").style.display = "none";
+      stopRecognition();
+      document.getElementById("voiceRecordBtn").classList.remove('recording');
+      document.getElementById("voiceRecordBtn").textContent = "🎤 음성으로 말하기";
+    }
+    function startTypingInput() {
+      document.getElementById("voiceSection").style.display = "none";
+      document.getElementById("typingSection").style.display = "flex";
+      stopRecognition();
+      document.getElementById("voiceRecordBtn").classList.remove('recording');
+      document.getElementById("voiceRecordBtn").textContent = "🎤 음성으로 말하기";
+    }
+    function closeTypingSection() {
+      document.getElementById("typingSection").style.display = "none";
+    }
+    function saveDream(source) {
+      const key = "dreamLensDreams";
+      const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+      const content = source === 'voice'
+        ? document.getElementById("voiceText").value.trim()
+        : document.getElementById("typedText").value.trim();
+      let mediaData = null, mediaType = null;
+      if (source === 'voice') {
+        mediaData = voiceMediaData;
+        mediaType = voiceMediaType;
+      } else {
+        mediaData = typedMediaData;
+        mediaType = typedMediaType;
+      }
+      if (!content) {
+        alert("꿈 내용을 입력해 주세요.");
+        return;
+      }
+      const now = new Date();
+      const dream = {
+        text: content,
+        date: now.toLocaleString(),
+        videoUrl: null,
+        media: mediaData ? mediaData : null,
+        mediaType: mediaType ? mediaType : null
+      };
+      dreams.unshift(dream);
+      localStorage.setItem(key, JSON.stringify(dreams));
+      alert("꿈이 저장되었어요! 🌙");
+      if (source === 'voice') {
+        // 카메라 버튼이 없으므로 미디어 리셋 불필요
+        document.getElementById('voiceDreamMediaPreview').innerHTML = "";
+        voiceMediaData = null; voiceMediaType = null;
+      } else {
+        document.getElementById('typedDreamMediaPreview').innerHTML = "";
+        typedMediaData = null; typedMediaType = null;
+      }
+    }
+    function showDreams() {
+      document.getElementById("dreamList").style.display = "flex";
+      document.getElementById("closeDreamsBtn").style.display = "inline-block";
+      const key = "dreamLensDreams";
+      const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+      const container = document.getElementById("dreamList");
+      container.innerHTML = "";
+      if (dreams.length === 0) {
+        container.innerHTML = "<p>저장된 꿈이 아직 없어요.</p>";
+        return;
+      }
+      dreams.forEach((dream, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "dream-record-row";
+        let mediaCol = document.createElement("div");
+        mediaCol.className = "dream-media-col";
+        // 미디어 미리보기 (이미지/비디오)
+        if (dream.media && dream.mediaType === 'image') {
+          let img = document.createElement('img');
+          img.src = dream.media;
+          img.className = 'dream-media-preview';
+          mediaCol.appendChild(img);
+        } else if (dream.media && dream.mediaType === 'video') {
+          let vid = document.createElement('video');
+          vid.className = 'dream-media-preview';
+          vid.controls = true;
+          vid.loop = true;
+          vid.autoplay = true;
+          vid.muted = true;
+          vid.style.background = "#000";
+          vid.src = dream.media;
+          mediaCol.appendChild(vid);
+          setTimeout(()=>{ vid.play().catch(()=>{}); }, 100);
+        }
+        // 미디어 첨부/삭제 버튼
+        let mediaBtns = document.createElement("div");
+        mediaBtns.className = "dream-media-btns";
+        let uploadBtn = document.createElement('button');
+        uploadBtn.className = "attach-media-btn";
+        uploadBtn.title = "미디어 첨부";
+        uploadBtn.innerHTML = '📷';
+        uploadBtn.onclick = () => changeMedia(index);
+        mediaBtns.appendChild(uploadBtn);
+        let delBtn = document.createElement('button');
+        delBtn.className = "icon-btn";
+        delBtn.title = "미디어 삭제";
+        delBtn.innerHTML = '❌';
+        delBtn.onclick = () => deleteMedia(index);
+        mediaBtns.appendChild(delBtn);
+        mediaCol.appendChild(mediaBtns);
+
+        let contentCol = document.createElement("div");
+        contentCol.className = "dream-content-col";
+        contentCol.innerHTML = `<strong>${dream.date}</strong><br>
+          <textarea id="editDream${index}" rows="3" style="width:350px; max-width:90vw;">${dream.text}</textarea>
+          <div class="dream-action-btns">
+            <button class="icon-btn" title="수정" onclick="updateDream(${index})">✏️</button>
+            <button class="icon-btn" title="삭제" onclick="deleteDream(${index})">🗑️</button>
+          </div>`;
+        wrapper.appendChild(mediaCol);
+        wrapper.appendChild(contentCol);
+        container.appendChild(wrapper);
+      });
+    }
+    function changeMedia(index) {
+      let input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,video/*';
+      input.style.display = 'none';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const key = "dreamLensDreams";
+          const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+          if (file.type.startsWith('image/')) {
+            dreams[index].media = ev.target.result;
+            dreams[index].mediaType = 'image';
+          } else if (file.type.startsWith('video/')) {
+            dreams[index].media = ev.target.result;
+            dreams[index].mediaType = 'video';
+          } else {
+            alert("이미지 또는 동영상 파일만 첨부할 수 있습니다.");
+            return;
+          }
+          localStorage.setItem(key, JSON.stringify(dreams));
+          showDreams();
+        }
+        reader.readAsDataURL(file);
+      };
+      document.body.appendChild(input);
+      input.click();
+      setTimeout(()=>{ if (input.parentNode) input.parentNode.removeChild(input); }, 5000);
+    }
+    function deleteMedia(index) {
+      const key = "dreamLensDreams";
+      const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+      dreams[index].media = null;
+      dreams[index].mediaType = null;
+      localStorage.setItem(key, JSON.stringify(dreams));
+      showDreams();
+    }
+    function closeAnalysisResult(containerId) {
+      const container = document.getElementById(containerId);
+      if (container) container.innerHTML = '';
+    }
+    async function analyzeDreamWithGpt(source, listIndex) {
+      let content, containerId;
+      if (source === 'voice') {
+        content = document.getElementById("voiceText").value.trim();
+        containerId = "voiceAnalysisResultContainer";
+      } else if (source === 'typed') {
+        content = document.getElementById("typedText").value.trim();
+        containerId = "typedAnalysisResultContainer";
+      } else if (source === 'list') {
+        const key = "dreamLensDreams";
+        const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+        content = dreams[listIndex]?.text || "";
+        containerId = `listAnalysisResultContainer${listIndex}`;
+      }
+      if (!content) {
+        alert("꿈 내용을 입력해 주세요.");
+        return;
+      }
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `
+          <div class="analysisResultBox">
+            <span class="analysisResultContent">
+              <span class="spinner"></span> GPT 심리분석 중입니다...
+            </span>
+            <button class="inline-close-x" onclick="closeAnalysisResult('${containerId}')">✖️</button>
+          </div>
+        `;
+      }
+      let OPENAI_API_KEY = window.localStorage.getItem('DREAMLENS_OPENAI_KEY') || "";
+      if (!OPENAI_API_KEY) {
+        OPENAI_API_KEY = prompt("GPT 심리분석을 위해 OpenAI API Key를 입력해 주세요.\n(이 키는 브라우저에만 저장되고 외부로 전송되지 않습니다)");
+        if (OPENAI_API_KEY) {
+          window.localStorage.setItem('DREAMLENS_OPENAI_KEY', OPENAI_API_KEY);
+        } else {
+          if (container) container.innerHTML = "";
+          return;
+        }
+      }
+      const promptMsg = `
+아래는 사용자가 입력한 꿈입니다.
+
+"${content}"
+
+이 꿈의 분위기, 주요 상징, 감정, 반복되는 패턴 등을 파악해서
+1. 꿈의 내용을 간단히 요약하고,
+2. 주요 소재/상징의 의미를 분석하고,
+3. 만약 현대 심리학/프로이트/융 관점으로 해석할 만한 부분이 있다면 그 관점도 곁들여,
+4. 실생활에 적용할 수 있는 조언 또는 긍정적인 메시지도 덧붙여줘.
+
+분석은 입력된 꿈에 맞게 자유롭고 창의적으로 해줘.
+`;
+      try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + OPENAI_API_KEY
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              { role: "system", content: "당신은 심리학적인 꿈 해몽 전문가입니다." },
+              { role: "user", content: promptMsg }
+            ]
+          })
+        });
+        const data = await response.json();
+        let result = "";
+        if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+          result = data.choices[0].message.content.trim();
+        } else if (data.error && data.error.message) {
+          if (data.error.message.includes('quota')) {
+            result = "⚠️ OpenAI API 사용량(쿼터)이 초과되었습니다. OpenAI 홈페이지에서 사용량/결제 상태를 확인해 주세요.<br>" +
+                     "👉 <a href='https://platform.openai.com/account/usage' target='_blank'>사용량 확인</a> | " +
+                     "<a href='https://platform.openai.com/account/billing/overview' target='_blank'>결제 정보 확인</a>";
+          } else {
+            result = "오류: " + data.error.message;
+          }
+        } else {
+          result = "답변을 받지 못했습니다. 다시 시도해 보세요.";
+        }
+        if (container) {
+          container.innerHTML = `
+          <div class="analysisResultBox">
+            <span class="analysisResultContent">
+              🧠 GPT 심리분석 결과:<br><br>${result}
+            </span>
+            <button class="inline-close-x" onclick="closeAnalysisResult('${containerId}')">✖️</button>
+          </div>
+          `;
+        }
+      } catch (error) {
+        if (container) {
+          container.innerHTML = `
+          <div class="analysisResultBox">
+            <span class="analysisResultContent">
+              분석 중 오류가 발생했습니다.
+            </span>
+            <button class="inline-close-x" onclick="closeAnalysisResult('${containerId}')">✖️</button>
+          </div>
+          `;
+        }
+        console.error(error);
+      }
+    }
+    function generateVideo(source) {
+      const content = source === 'voice'
+        ? document.getElementById("voiceText").value.trim()
+        : document.getElementById("typedText").value.trim();
+      if (!content) {
+        alert("꿈 내용을 입력해 주세요.");
+        return;
+      }
+      window.open("https://app.runwayml.com/gen2", "_blank");
+    }
+    function copyText(id) {
+      const textArea = document.getElementById(id);
+      textArea.select();
+      textArea.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(textArea.value).then(() => {
+        alert("꿈 내용이 복사되었어요! ✨");
+      });
+    }
+    function updateDream(index) {
+      const key = "dreamLensDreams";
+      const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+      const updatedText = document.getElementById(`editDream${index}`).value.trim();
+      if (updatedText) {
+        dreams[index].text = updatedText;
+        localStorage.setItem(key, JSON.stringify(dreams));
+        alert("꿈이 수정되었어요! ✏️");
+        showDreams();
+      }
+    }
+    function closeDreams() {
+      document.getElementById("dreamList").style.display = "none";
+      document.getElementById("closeDreamsBtn").style.display = "none";
+    }
+    function deleteDream(index) {
+      const key = "dreamLensDreams";
+      const dreams = JSON.parse(localStorage.getItem(key) || "[]");
+      if (confirm("정말 이 꿈을 삭제할까요?")) {
+        dreams.splice(index, 1);
+        localStorage.setItem(key, JSON.stringify(dreams));
+        alert("꿈이 삭제되었어요. 🗑️");
+        showDreams();
+      }
+    }
+  </script>
+</body>
+</html>
